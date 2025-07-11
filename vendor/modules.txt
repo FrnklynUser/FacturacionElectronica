@@ -1,0 +1,44 @@
+# github.com/artemkunich/goxades v0.2.1
+## explicit; go 1.15
+github.com/artemkunich/goxades
+# github.com/beevik/etree v1.1.0
+## explicit
+github.com/beevik/etree
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
+# github.com/jonboulle/clockwork v0.2.0
+## explicit; go 1.13
+github.com/jonboulle/clockwork
+# github.com/russellhaering/goxmldsig v1.1.0
+## explicit; go 1.15
+github.com/russellhaering/goxmldsig
+github.com/russellhaering/goxmldsig/etreeutils
+github.com/russellhaering/goxmldsig/types
+# github.com/tiaguinho/gosoap v1.4.4
+## explicit; go 1.13
+github.com/tiaguinho/gosoap
+# golang.org/x/net v0.42.0
+## explicit; go 1.23.0
+golang.org/x/net/html
+golang.org/x/net/html/atom
+golang.org/x/net/html/charset
+# golang.org/x/text v0.27.0
+## explicit; go 1.23.0
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/htmlindex
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/language
+golang.org/x/text/runes
+golang.org/x/text/transform

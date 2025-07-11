@@ -12,6 +12,6 @@ require (
 require (
 	github.com/jonboulle/clockwork v0.2.0 // indirect
 	github.com/russellhaering/goxmldsig v1.1.0 // indirect
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 )

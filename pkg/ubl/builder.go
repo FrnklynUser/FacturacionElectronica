@@ -555,3 +555,16 @@ func BuildDebitNote(dn *domain.DebitNote) (*DebitNote, error) {
 
 	return ublDebitNote, nil
 }
+
+func getDocType(docType string) string {
+	switch docType {
+	case "DNI":
+		return "1"
+	case "RUC":
+		return "6"
+	case "CE":
+		return "4"
+	default:
+		return "0"
+	}
+}
