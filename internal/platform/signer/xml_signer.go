@@ -1,44 +1,56 @@
 package signer
 
 import (
+	"crypto"
+	"crypto/rsa"
 	"fmt"
-	"os"
+	"io/ioutil"
 
-	"github.com/artemkunich/goxades"
 	"github.com/beevik/etree"
+	dsig "github.com/russellhaering/goxmldsig"
+	"golang.org/x/crypto/pkcs12"
 )
 
 // XMLSigner handles the digital signature of XML documents.
 type XMLSigner struct {
-	signer *goxades.Signer
+	signer *dsig.SigningContext
 }
 
 // NewXMLSigner creates a new XMLSigner.
 // It requires the path to a PKCS#12 certificate file and its password.
 func NewXMLSigner(p12FilePath, password string) (*XMLSigner, error) {
-	// In a real application, these values should come from a secure configuration.
 	if p12FilePath == "" {
 		return nil, fmt.Errorf("ruta del certificado no puede estar vacía")
 	}
 
-	cert, err := os.ReadFile(p12FilePath)
+	p12, err := ioutil.ReadFile(p12FilePath)
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo leer el archivo del certificado: %w", err)
 	}
 
-	signer, err := goxades.NewSigner(cert, password, goxades.SignaturePolicy{
-		Identifier: goxades.Identifier{Value: "https://www.sunat.gob.pe/policies/factura-electronica"},
-	})
+	privateKey, certificate, err := pkcs12.Decode(p12, password)
 	if err != nil {
-		return nil, fmt.Errorf("error al crear el firmador: %w", err)
+		return nil, fmt.Errorf("no se pudo decodificar el archivo P12: %w", err)
 	}
 
+	rsaPrivateKey, ok := privateKey.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("la llave privada no es de tipo RSA")
+	}
+
+	keyStore := &dsig.MemoryX509KeyStore{
+		PrivateKey: rsaPrivateKey,
+		Cert:       certificate,
+	}
+
+	signer := dsig.NewDefaultSigningContext(keyStore)
+	signer.Hash = crypto.SHA256
 	return &XMLSigner{signer: signer}, nil
 }
 
-// Sign applies a digital signature to an XML document.
+// Sign applies a digital signature to an XML document according to UBL standards.
 func (s *XMLSigner) Sign(xmlContent []byte) ([]byte, error) {
-	fmt.Println("FIRMANDO XML con la librería goxades...")
+	fmt.Println("FIRMANDO XML con la librería goxmldsig...")
 
 	// 1. Parse the XML content into an etree document.
 	doc := etree.NewDocument()
@@ -46,12 +58,38 @@ func (s *XMLSigner) Sign(xmlContent []byte) ([]byte, error) {
 		return nil, fmt.Errorf("error al parsear el XML para firmar: %w", err)
 	}
 
-	// 2. Sign the document.
-	if err := s.signer.Sign(doc); err != nil {
+	root := doc.Root()
+	if root == nil {
+		return nil, fmt.Errorf("documento XML no tiene elemento raíz")
+	}
+
+	// 2. Find the placeholder for the signature and its parent.
+	extensionContent := root.FindElement("./ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent")
+	if extensionContent == nil {
+		return nil, fmt.Errorf("no se encontró el elemento ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent")
+	}
+
+	// Remove any existing signature placeholder. The UBL builder creates one.
+	if placeholder := extensionContent.SelectElement("ds:Signature"); placeholder != nil {
+		extensionContent.RemoveChild(placeholder)
+	}
+
+	// 3. Sign the root element. This creates an enveloped signature.
+	signed, err := s.signer.SignEnveloped(root)
+	if err != nil {
 		return nil, fmt.Errorf("error al firmar el documento XML: %w", err)
 	}
 
-	// 3. Serialize the signed document back to bytes.
+	// 4. Extract the generated signature element.
+	signature := signed.SelectElement("ds:Signature")
+	if signature == nil {
+		return nil, fmt.Errorf("la firma generada no se encontró en el documento firmado")
+	}
+
+	// 5. Add the real signature to the correct place in the original document.
+	extensionContent.AddChild(signature.Copy())
+
+	// 6. Serialize the original document, now with the signature correctly placed.
 	signedXML, err := doc.WriteToBytes()
 	if err != nil {
 		return nil, fmt.Errorf("error al serializar el XML firmado: %w", err)

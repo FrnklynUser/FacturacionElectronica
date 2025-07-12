@@ -21,10 +21,7 @@ type Client struct {
 // NewClient creates a new SUNAT API client.
 // wsdlURL is the URL to the WSDL file (e.g., "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService?wsdl").
 func NewClient(wsdlURL, username, password string) *Client {
-	soapClient, err := gosoap.NewClient(wsdlURL)
-	if err != nil {
-		panic(fmt.Errorf("error creando el cliente SOAP: %w", err))
-	}
+	soapClient := gosoap.NewClient(wsdlURL)
 	return &Client{
 		soapClient: soapClient,
 		username:   username,
