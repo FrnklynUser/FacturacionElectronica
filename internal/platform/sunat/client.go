@@ -20,13 +20,16 @@ type Client struct {
 
 // NewClient creates a new SUNAT API client.
 // wsdlURL is the URL to the WSDL file (e.g., "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService?wsdl").
-func NewClient(wsdlURL, username, password string) *Client {
-	soapClient := gosoap.NewClient(wsdlURL)
+func NewClient(wsdlURL, username, password string) (*Client, error) {
+	soapClient, err := gosoap.SoapClient(wsdlURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creando el cliente SOAP: %w", err)
+	}
 	return &Client{
 		soapClient: soapClient,
 		username:   username,
 		password:   password,
-	}
+	}, nil
 }
 
 // SendBillRequest represents the SOAP request for sendBill operation.

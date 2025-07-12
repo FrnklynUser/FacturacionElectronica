@@ -29,7 +29,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al inicializar el firmador digital: %v", err)
 	}
-	sunatClient := sunat.NewClient(sunatBaseURL, sunatUsername, sunatPassword)
+	sunatClient, err := sunat.NewClient(sunatBaseURL, sunatUsername, sunatPassword)
+	if err != nil {
+		log.Fatalf("Error al inicializar el cliente de SUNAT: %v", err)
+	}
 
 	// 2. Initialize the core logic (the "service" layer).
 	invoiceService := service.NewInvoiceService(invoiceRepo, signer, sunatClient)

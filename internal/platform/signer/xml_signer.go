@@ -3,12 +3,14 @@ package signer
 import (
 	"crypto"
 	"crypto/rsa"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/beevik/etree"
 	dsig "github.com/russellhaering/goxmldsig"
 	"golang.org/x/crypto/pkcs12"
+	"encoding/pem"
 )
 
 // XMLSigner handles the digital signature of XML documents.
@@ -28,25 +30,55 @@ func NewXMLSigner(p12FilePath, password string) (*XMLSigner, error) {
 		return nil, fmt.Errorf("no se pudo leer el archivo del certificado: %w", err)
 	}
 
-	privateKey, certificate, err := pkcs12.Decode(p12, password)
+	pemBlocks, err := pkcs12.ToPEM(p12, password)
 	if err != nil {
-		return nil, fmt.Errorf("no se pudo decodificar el archivo P12: %w", err)
+		return nil, fmt.Errorf("no se pudo decodificar el archivo P12 a PEM: %w", err)
 	}
 
-	rsaPrivateKey, ok := privateKey.(*rsa.PrivateKey)
+	var certPEM, keyPEM []byte
+	for _, b := range pemBlocks {
+		if b.Type == "CERTIFICATE" {
+			certPEM = pem.EncodeToMemory(b)
+		}
+		if b.Type == "PRIVATE KEY" {
+			keyPEM = pem.EncodeToMemory(b)
+		}
+	}
+
+	if keyPEM == nil || certPEM == nil {
+		return nil, fmt.Errorf("no se encontró la llave privada o el certificado en el archivo P12")
+	}
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return nil, fmt.Errorf("error al cargar el par de llaves X509: %w", err)
+	}
+	
+	rsaPrivateKey, ok := cert.PrivateKey.(*rsa.PrivateKey)
 	if !ok {
 		return nil, fmt.Errorf("la llave privada no es de tipo RSA")
 	}
 
-	keyStore := &dsig.MemoryX509KeyStore{
-		PrivateKey: rsaPrivateKey,
-		Cert:       certificate,
+	ks := &customKeyStoreImpl{
+		privateKey: rsaPrivateKey,
+		cert: cert.Certificate[0],
 	}
 
-	signer := dsig.NewDefaultSigningContext(keyStore)
+	signer := dsig.NewDefaultSigningContext(ks)
 	signer.Hash = crypto.SHA256
+
 	return &XMLSigner{signer: signer}, nil
 }
+
+type customKeyStoreImpl struct {
+	privateKey *rsa.PrivateKey
+	cert       []byte
+}
+
+func (ks *customKeyStoreImpl) GetKeyPair() (*rsa.PrivateKey, []byte, error) {
+	return ks.privateKey, ks.cert, nil
+}
+
 
 // Sign applies a digital signature to an XML document according to UBL standards.
 func (s *XMLSigner) Sign(xmlContent []byte) ([]byte, error) {
@@ -68,7 +100,7 @@ func (s *XMLSigner) Sign(xmlContent []byte) ([]byte, error) {
 	if extensionContent == nil {
 		return nil, fmt.Errorf("no se encontró el elemento ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent")
 	}
-
+	
 	// Remove any existing signature placeholder. The UBL builder creates one.
 	if placeholder := extensionContent.SelectElement("ds:Signature"); placeholder != nil {
 		extensionContent.RemoveChild(placeholder)
