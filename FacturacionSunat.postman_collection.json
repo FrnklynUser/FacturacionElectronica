@@ -1,0 +1,151 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-1234-abcdef123456",
+		"name": "FacturacionSunat API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Crear Factura",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tipo_comprobante\": \"01\",\n    \"serie\": \"F001\",\n    \"numero\": 123,\n    \"moneda\": \"PEN\",\n    \"emisor\": {\n        \"ruc\": \"20000000001\", \"razon_social\": \"EMPRESA EMISORA S.A.C.\", \"direccion\": \"AV. MI DIRECCION 123\"\n    },\n    \"receptor\": {\n        \"tipo_doc\": \"RUC\", \"num_doc\": \"20111111111\", \"nombre\": \"EMPRESA RECEPTORA S.A.C.\"\n    },\n    \"items\": [\n        {\n            \"codigo\": \"P001\",\n            \"descripcion\": \"Producto 1\",\n            \"cantidad\": 2,\n            \"valor_unitario\": 100.00,\n            \"valor_total\": 200.00,\n            \"igv\": 36.00\n        }\n    ],\n    \"totales\": {\n        \"gravado\": 200.00,\n        \"igv\": 36.00,\n        \"total\": 236.00\n    }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/invoices",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"invoices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Crear Nota de Crédito",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tipo_comprobante\": \"07\",\n    \"serie\": \"FC01\",\n    \"numero\": 45,\n    \"moneda\": \"PEN\",\n    \"emisor\": {\n        \"ruc\": \"20000000001\", \"razon_social\": \"EMPRESA EMISORA S.A.C.\", \"direccion\": \"AV. MI DIRECCION 123\"\n    },\n    \"receptor\": {\n        \"tipo_doc\": \"RUC\", \"num_doc\": \"20111111111\", \"nombre\": \"EMPRESA RECEPTORA S.A.C.\"\n    },\n    \"motivo_o_sustento\": {\n        \"nro_comprobante_afectado\": \"F001-123\",\n        \"codigo_motivo\": \"01\",\n        \"descripcion_motivo\": \"Anulación de la operación\"\n    },\n    \"items\": [\n        {\n            \"codigo\": \"P001\",\n            \"descripcion\": \"Producto 1\",\n            \"cantidad\": 2,\n            \"valor_unitario\": 100.00,\n            \"valor_total\": 200.00,\n            \"igv\": 36.00\n        }\n    ],\n    \"totales\": {\n        \"gravado\": 200.00,\n        \"igv\": 36.00,\n        \"total\": 236.00\n    }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/credit-notes",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"credit-notes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar Estado de Ticket",
+			"description": "Reemplaza el {ticket_id} con el ticket devuelto por una operación de creación.",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/documents/{ticket_id}/status",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"documents",
+						"{ticket_id}",
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar CDR",
+			"description": "Reemplaza los parámetros en la URL con los datos del comprobante que quieres consultar.",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/documents/cdr?ruc=20000000001&docType=01&series=F001&number=123",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"documents",
+						"cdr"
+					],
+					"query": [
+						{
+							"key": "ruc",
+							"value": "20000000001"
+						},
+						{
+							"key": "docType",
+							"value": "01"
+						},
+						{
+							"key": "series",
+							"value": "F001"
+						},
+						{
+							"key": "number",
+							"value": "123"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		}
+	]
+}
